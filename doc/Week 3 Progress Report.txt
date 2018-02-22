@@ -1,0 +1,16 @@
+Week 3 Progress Report TH9
+
+Current Issues
+- System needs implemention.
+- Mutation Testing
+
+Resolved Issues
+- Cover Metric Selected (Def-Use Pairs)
+- System under test selected (Banking System)
+- Data Collection system designed (DefUseDataCollector)
+
+Plan
+- Implement System
+  - Inserting report()s into the banking system where needed
+  - Implementing getResults() to process results
+  - Implementing report() to collect data
