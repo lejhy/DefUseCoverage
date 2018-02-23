@@ -1,3 +1,7 @@
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Set;
+
 /**DefUseDataCollector
  * 
  * A global object that the system reports data to during execution. 
@@ -38,15 +42,121 @@ public class DefUseDataCollector {
 	private static DefUseDataCollector collector = new DefUseDataCollector();
 	public static DefUseDataCollector get() { return collector; }
 	
-	public DefUseDataCollector() {
-		//Set up data structures.
+	//Data Structure fields
+	private ArrayList<DataAccessLogEntry> globalExecutionList = new ArrayList<DataAccessLogEntry>();
+	private HashMap<Long, ArrayList<DataAccessLogEntry>> threadExecutionList = new HashMap<Long, ArrayList<DataAccessLogEntry>>();
+	
+	//Output whenever a report is made.
+	private boolean outputReports = true;
+	//Output all possible pairs generated.
+	private boolean outputAllPossiblePairs = true;
+	
+	//Internal class for representing instruction pairs.
+	private class InstructionPair {
+		long thread1ID;
+		int instruction1ID;
+		long thread2ID;
+		int instruction2ID;
+		
+		public InstructionPair (long t1ID, int i1ID, long t2ID, int i2ID) {
+			thread1ID = t1ID;
+			instruction1ID = i1ID;
+			thread2ID = t2ID;
+			instruction2ID = i2ID;
+		}
+		
+		public String toString() {
+			return "[("+thread1ID+","+instruction1ID+") ("+thread2ID+","+instruction2ID+")]";
+		}
 	}
 	
-	public void report(char readOrWrite, String variable, long threadID) {
-		//Takes the data given and stores it.
+	public DefUseDataCollector() {
+		//Set up data structures.
+		// - One that holds execution order as a whole.
+		// - Another that holds execution order for each specific thread.
+		
+	}
+	
+	/**
+	 * Report a read/write access on a variable by a Thread.
+	 * @param readOrWrite 'r' for read, 'w' for write
+	 * @param variable the name of the variable accessed
+	 * @param threadID the ID of the Thread that did the access
+	 */
+	 public synchronized void report(char readOrWrite, String variable, long threadID) {
+		int instructionID;
+		ArrayList<DataAccessLogEntry> list = threadExecutionList.get(threadID);
+		
+		//Figures out what ID the instruction is for this particular thread. Also initialises the list if this is the first instruction.
+		if (list == null) {
+			list = new ArrayList<DataAccessLogEntry>();
+			threadExecutionList.put(threadID, list);
+			instructionID = 0;
+		}
+		else {
+			instructionID = list.size();
+		}
+		
+		//Create a log entry with the given data.
+		DataAccessLogEntry log = new DataAccessLogEntry(readOrWrite, variable, threadID, instructionID);
+		
+		//Checks that the readOrWrite is valid.
+		if (readOrWrite == 'r' || readOrWrite == 'w') {
+			if (outputReports)
+				System.out.println("Report made, data reported: "+log.toString());
+			
+			//Add log entry to relevant data structures.
+			globalExecutionList.add(log);
+			list.add(log);
+		}
+		else {
+			System.out.println("Invalid report made, data reported: "+log.toString());
+		}
 	}
 	
 	public void getResults() {
+		ArrayList<InstructionPair> list = generatePairs();
 		
+		if (outputAllPossiblePairs) {
+			System.out.println("Possible pair list size: "+list.size());
+			for (InstructionPair p : list) {
+				System.out.println(p.toString());
+			}
+		}
+	}
+	
+	private ArrayList<InstructionPair> generatePairs() {
+		ArrayList<InstructionPair> pairList = new ArrayList<InstructionPair>();
+		Set<Long> keys = threadExecutionList.keySet();
+		//For each thread's execution list...
+		for (Long key : keys) {
+			//Get this thread's list
+			ArrayList<DataAccessLogEntry> currentList = threadExecutionList.get(key);
+			//Compare to all other thread lists...
+			for (long otherKey : keys) {
+				if (key != otherKey) {
+					//Get the other thread's list
+					ArrayList<DataAccessLogEntry> otherList = threadExecutionList.get(otherKey);
+					//Now go through the current thread's list, looking for a write.
+					for (DataAccessLogEntry curEntry : currentList) {
+						//Found a write
+						if (curEntry.getAccessType() == 'w') {
+							//Look through the other thread list, looking for reads to pair with this write.
+							for (DataAccessLogEntry otherEntry : otherList) {
+								if (curEntry.getVariableName() == otherEntry.getVariableName()) {
+									if (otherEntry.getAccessType() == 'r') {
+										//We found a match!
+										InstructionPair i = new InstructionPair(curEntry.getThreadID(), curEntry.getInstructionID(), 
+												                                otherEntry.getThreadID(), otherEntry.getInstructionID());
+										pairList.add(i);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return pairList;
 	}
 }
