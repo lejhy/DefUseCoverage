@@ -1,36 +1,44 @@
 
 public class DataAccessLogEntry {
 
-	private char accessType;
-	String variableName;
-	long threadID;
-	int instructionID;
-	
-	public DataAccessLogEntry(char readOrWrite, String variable, long threadID, int instructionID) {
-		accessType = readOrWrite;
-		variableName = variable;
-		this.threadID = threadID;
-		this.instructionID = instructionID;
-	}
+    long threadID;
+    Instruction instruction;
 
-	public char getAccessType() {
-		return accessType;
-	}
+    public DataAccessLogEntry(Instruction instruction, long threadID) {
+        this.threadID = threadID;
+        this.instruction = instruction;
+    }
 
-	public String getVariableName() {
-		return variableName;
-	}
+    public long getThreadID() {
+        return threadID;
+    }
 
-	public long getThreadID() {
-		return threadID;
-	}
-	
-	public int getInstructionID() {
-		return instructionID;
-	}
-	
-	public String toString() {
-		return "[("+threadID+","+instructionID+"): '"+accessType+"', var: "+variableName+"]";
-	}
-	
+    public Instruction getInstruction() {
+       return instruction;
+    }
+
+    public String toString() {
+        return "<"+threadID+","+instruction+">";
+    }
+
+    public boolean equals(Object anotherObject) {
+        if (!(anotherObject instanceof DataAccessLogEntry)) {
+            return false;
+        }
+        DataAccessLogEntry anotherLogEntry = (DataAccessLogEntry)anotherObject;
+        if (anotherLogEntry.getThreadID() != threadID) {
+            return false;
+        }
+        if (!anotherLogEntry.getInstruction().equals(instruction)) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result =  (int)(threadID ^ (threadID >>> 32));
+        result = 37 * result + instruction.hashCode();
+        return result;
+    }
 }
