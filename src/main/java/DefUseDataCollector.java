@@ -50,6 +50,8 @@ public class DefUseDataCollector {
 	private boolean outputReports = true;
 	//Output all possible pairs generated.
 	private boolean outputAllPossiblePairs = true;
+	//Output executed pairs found.
+	private boolean outputExecutedPairs = true;
 	
 	//Internal class for representing instruction pairs.
 	private class InstructionPair {
@@ -115,14 +117,29 @@ public class DefUseDataCollector {
 	}
 	
 	public void getResults() {
-		ArrayList<InstructionPair> list = generatePairs();
+		//Generate all possible pairs.
+		ArrayList<InstructionPair> possiblePairs = generatePairs();
 		
 		if (outputAllPossiblePairs) {
-			System.out.println("Possible pair list size: "+list.size());
-			for (InstructionPair p : list) {
+			System.out.println("Possible pair list size: "+possiblePairs.size());
+			for (InstructionPair p : possiblePairs) {
 				System.out.println(p.toString());
 			}
 		}
+		
+		//Find all executed pairs.
+		ArrayList<InstructionPair> actualPairs = getExecutedPairs();
+		
+		if (outputExecutedPairs) {
+			System.out.println("Executed pair list size: "+actualPairs.size());
+			for (InstructionPair p : actualPairs) {
+				System.out.println(p.toString());
+			}
+		}
+		
+		//Final result
+		double executedPercentage = (actualPairs.size()*100)/(possiblePairs.size());
+		System.out.println("The coverage score this run was "+executedPercentage+"%.");
 	}
 	
 	private ArrayList<InstructionPair> generatePairs() {
@@ -155,6 +172,39 @@ public class DefUseDataCollector {
 						}
 					}
 				}
+			}
+		}
+		return pairList;
+	}
+	
+	private ArrayList<InstructionPair> getExecutedPairs() {
+		ArrayList<InstructionPair> pairList = new ArrayList<>();
+		//For each instruction executed...
+		for (int i = 0 ; i < globalExecutionList.size() ; i++) {
+			DataAccessLogEntry currentEntry = globalExecutionList.get(i);
+			//Check if it is a write.
+			if (currentEntry.getAccessType() == 'w') {
+				//If so, get the variable name and look for a matching read in another thread.
+				String currentVar = currentEntry.getVariableName();
+				long currentThread = currentEntry.getThreadID();
+				for (int j = i+1; j < globalExecutionList.size(); j++) {
+					DataAccessLogEntry nextEntry = globalExecutionList.get(j);
+					//Check for matching variable
+					if (nextEntry.getVariableName() == currentVar) {
+						//And check that it is a read, and isn't by the same thread.
+						if (nextEntry.getThreadID() != currentThread && nextEntry.getAccessType() == 'r') {
+							//This is a matching pair, so add it.
+							InstructionPair p = new InstructionPair(currentThread, currentEntry.getInstructionID()
+									, nextEntry.getThreadID(), nextEntry.getInstructionID());
+							pairList.add(p);
+						}
+						//If it's a write by the same thread, we can't search further for the current entry.
+						else if (nextEntry.getThreadID() == currentThread && nextEntry.getAccessType() == 'w') {
+							j = globalExecutionList.size(); //Breaks the loop.
+						}
+					}
+				}
+				
 			}
 		}
 		return pairList;

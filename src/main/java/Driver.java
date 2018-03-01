@@ -13,32 +13,18 @@ public class Driver {
 
 		Account account1 = bank.getAccount(accountnumber);//how to get the account number
 		
-		account1.deposit(50.0);
-		account1.deposit(50.0);
-		account1.getBalance();
-		account1.deposit(50.0);
-		
-		Thread customerThread1 = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				account1.deposit(50.0);
-				account1.getBalance();
-			}
-		});
-		
-		Thread customerThread2 = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				account1.getBalance();
-			}
-		});
+		Thread customerThread1 = new Thread(new TestRunnable1(account1));
+		Thread customerThread2 = new Thread(new TestRunnable1(account1));
+		Thread customerThread3 = new Thread(new TestRunnable1(account1));
 		
 		customerThread1.start();
 		customerThread2.start();
+		customerThread3.start();
 		
 		try {
 			customerThread1.join();
 			customerThread2.join();
+			customerThread3.join();
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

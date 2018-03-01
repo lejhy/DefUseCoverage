@@ -39,6 +39,9 @@ class Account {
     protected void deposit(double amount){
         System.out.println(Thread.currentThread().getName() + "thread with ID: " + Thread.currentThread().getId() + "is attempting to make a deposit...");
         lock.lock();
+        
+        DefUseDataCollector.get().report('w', "balance", Thread.currentThread().getId());
+        
         this.balance += amount;
         balanceIncreased.signal();
         lock.unlock();
@@ -49,6 +52,7 @@ class Account {
         boolean isWaiting = true;
         boolean success = false;
         lock.lock();
+        
         try {
             while (amount > balance) {
                 if (isWaiting == false) {
@@ -58,6 +62,7 @@ class Account {
                 System.out.println("Insufficient funds waiting for a deposit");
                 isWaiting = balanceIncreased.await(10, TimeUnit.SECONDS);
             }
+            DefUseDataCollector.get().report('w', "balance", Thread.currentThread().getId());
             balance -= amount;
             success = true;
         } catch (InterruptedException e) {
@@ -94,7 +99,10 @@ class Account {
         return interest;
     }
 
-    public double getBalance(){
+    public synchronized double getBalance(){
+    	
+        DefUseDataCollector.get().report('r', "balance", Thread.currentThread().getId());
+
         return balance;
     }
 

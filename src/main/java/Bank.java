@@ -21,11 +21,17 @@ class Bank {
     public boolean addCustomer(Customer customer){
         System.out.println("Adding new customer");
         lock.lock();
+        
+        DefUseDataCollector.get().report('r', "customerDB", Thread.currentThread().getId());
+        
         if (customerDB.containsKey(customer.getID())) {
             lock.unlock();
             System.out.println("This customer already exists!");
             return false;
         } else {
+        	
+            DefUseDataCollector.get().report('w', "customerDB", Thread.currentThread().getId());
+
             customerDB.put(customer.getID(), customer);
             lock.unlock();
             System.out.println("You're signed up!");
@@ -54,7 +60,9 @@ class Bank {
     }
 
     public int openAccount(String customerID, Account.Type accountType, String accountName){
-
+    	
+        DefUseDataCollector.get().report('r', "customerDB", Thread.currentThread().getId());
+        
         Customer customer = customerDB.get(customerID);
         if (customer == null) return -1; // Customer does not exist
         int accountNumber = generateAccountNumber();
@@ -75,6 +83,9 @@ class Bank {
         }
 
         lock.lock();
+        
+        DefUseDataCollector.get().report('w', "account", Thread.currentThread().getId());
+        
         customer.addAccount(account);
         accountDB.put(accountNumber, account);
         lock.unlock();
@@ -87,6 +98,9 @@ class Bank {
 
     public boolean removeAccount (String customerID, int accountNumber) {
         lock.lock();
+        
+        DefUseDataCollector.get().report('w', "account", Thread.currentThread().getId());
+
         Account account = accountDB.get(accountNumber);
         Customer customer = customerDB.get(customerID);
         if (account != null && customer != null) {
@@ -100,6 +114,9 @@ class Bank {
     }
 
     public Account getAccount(int accountNumber){
+    	
+    	DefUseDataCollector.get().report('r', "account", Thread.currentThread().getId());
+       
         System.out.println("ACCOUNT DATABASE:");
         System.out.println(accountDB.keySet());
         if(accountDB.keySet().contains(accountNumber)){
@@ -110,6 +127,8 @@ class Bank {
     }
 
     public Customer getCustomer(String ID){
+        DefUseDataCollector.get().report('r', "customerDB", Thread.currentThread().getId());
+
         return customerDB.get(ID);
     }
 
@@ -128,6 +147,10 @@ class Bank {
 
     public boolean addOwner(String customerID, int accountNumber) {
         lock.lock();
+        
+        DefUseDataCollector.get().report('w', "account", Thread.currentThread().getId());
+        DefUseDataCollector.get().report('w', "customerDB", Thread.currentThread().getId());
+
         Account account = accountDB.get(accountNumber);
         Customer customer = customerDB.get(customerID);
         if (account != null && customer != null) {
@@ -141,6 +164,10 @@ class Bank {
 
     public boolean removeOwner(String customerID, int accountNumber) {
         lock.lock();
+        
+        DefUseDataCollector.get().report('w', "account", Thread.currentThread().getId());
+        DefUseDataCollector.get().report('w', "customerDB", Thread.currentThread().getId());
+        
         Account account = accountDB.get(accountNumber);
         Customer customer = customerDB.get(customerID);
         if (account != null && customer != null) {
