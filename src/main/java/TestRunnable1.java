@@ -7,7 +7,6 @@ public class TestRunnable1 implements Runnable {
 		this.a = a;
 	}
 	
-	@Override
 	public void run() {
 		a.deposit(50.0);
 		a.withdraw(12.3);

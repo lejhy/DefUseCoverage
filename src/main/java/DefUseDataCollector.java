@@ -47,11 +47,12 @@ public class DefUseDataCollector {
 	private HashMap<Long, ArrayList<DataAccessLogEntry>> threadExecutionList = new HashMap<Long, ArrayList<DataAccessLogEntry>>();
 	
 	//Output whenever a report is made.
-	private boolean outputReports = true;
+	private boolean outputReports = false;
 	//Output all possible pairs generated.
-	private boolean outputAllPossiblePairs = true;
+	private boolean outputAllPossiblePairs = false;
 	//Output executed pairs found.
-	private boolean outputExecutedPairs = true;
+	private boolean outputExecutedPairs = false;
+	private boolean outputCoverageResult = false;
 	
 	//Internal class for representing instruction pairs.
 	private class InstructionPair {
@@ -116,7 +117,7 @@ public class DefUseDataCollector {
 		}
 	}
 	
-	public void getResults() {
+	public double getResults() {
 		//Generate all possible pairs.
 		ArrayList<InstructionPair> possiblePairs = generatePairs();
 		
@@ -139,7 +140,9 @@ public class DefUseDataCollector {
 		
 		//Final result
 		double executedPercentage = (actualPairs.size()*100)/(possiblePairs.size());
+		if (outputCoverageResult)
 		System.out.println("The coverage score this run was "+executedPercentage+"%.");
+		return executedPercentage;
 	}
 	
 	private ArrayList<InstructionPair> generatePairs() {
@@ -208,5 +211,9 @@ public class DefUseDataCollector {
 			}
 		}
 		return pairList;
+	}
+	
+	private void reset() {
+		collector = new DefUseDataCollector();
 	}
 }
