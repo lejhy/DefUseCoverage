@@ -101,8 +101,6 @@ public class DefUseDataCollector {
         } else if (instruction.getType() == Instruction.Type.READ) {
             // On a read create a pair with the last write if it exists and if it happened on a different thread
             DataAccessLogEntry lastWrite = fieldToLastWrite.get(field);
-            System.out.println(field.toString());
-            System.out.println(fieldToLastWrite.keySet().toString());
             if (lastWrite != null && lastWrite.getThreadID() != logEntry.getThreadID()) {
                 InstructionPair pair = new InstructionPair(lastWrite.getInstruction(), instruction);
                 if (outputReports) System.out.println("Pair Covered: "+pair.toString());
