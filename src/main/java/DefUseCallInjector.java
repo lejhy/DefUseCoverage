@@ -43,10 +43,8 @@ public class DefUseCallInjector implements ClassFileTransformer{
                 // Get the Javassist representation of the class
                 CtClass ctClass = classPool.get(className);
                 if (debugMode) System.out.println("Transforming class: " + ctClass.getName());
-                // Get all the fields of this class
-                CtField[] fields = ctClass.getDeclaredFields();
                 // Get all methods of this class and loop through them
-                CtMethod[] ctMethods = ctClass.getMethods();
+                CtMethod[] ctMethods = ctClass.getDeclaredMethods();
                 for (CtMethod ctMethod : ctMethods) {
                     if (debugMode) System.out.println("Transforming method: " + ctMethod.getName());
                     // Instrument method with ExprEditor
