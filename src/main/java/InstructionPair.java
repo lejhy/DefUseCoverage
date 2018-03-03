@@ -1,23 +1,31 @@
 public class InstructionPair {
-    Instruction i1;
-    Instruction i2;
+    Instruction write;
+    Instruction read;
 
     public InstructionPair (Instruction i1, Instruction i2) {
-        this.i1 = i1;
-        this.i2 = i2;
+        if (!i1.getField().equals(i2.getField())) throw new IllegalArgumentException("Both instructions must access the same field");
+        if (i1.getType() == Instruction.Type.WRITE && i2.getType() == Instruction.Type.READ) {
+            this.write = i1;
+            this.read = i2;
+        } else if (i1.getType() == Instruction.Type.READ && i2.getType() == Instruction.Type.WRITE) {
+            this.write = i2;
+            this.read = i1;
+        } else {
+            throw new IllegalArgumentException("One instruction has to be a READ and the other has to be a WRITE");
+        }
     }
 
-    public Instruction getI1() {
-        return i1;
+    public Instruction getWrite() {
+        return write;
     }
 
-    public Instruction getI2() {
-        return i2;
+    public Instruction getRead() {
+        return read;
     }
 
     @Override
     public String toString() {
-        return "{"+i1.toString()+i2.toString()+"}";
+        return "{"+ write.toString()+ read.toString()+"}";
     }
 
     @Override
@@ -26,10 +34,10 @@ public class InstructionPair {
             return false;
         }
         InstructionPair anotherPair = (InstructionPair)anotherObject;
-        if (!anotherPair.getI1().equals(i1)) {
+        if (!anotherPair.getWrite().equals(write)) {
             return false;
         }
-        if (!anotherPair.getI2().equals(i2)) {
+        if (!anotherPair.getRead().equals(read)) {
             return false;
         }
         return true;
@@ -37,8 +45,8 @@ public class InstructionPair {
 
     @Override
     public int hashCode() {
-        int result =  i1.hashCode();
-        result = 37 * result + i2.hashCode();
+        int result =  write.hashCode();
+        result = 37 * result + read.hashCode();
         return result;
     }
 }
