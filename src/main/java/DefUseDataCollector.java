@@ -1,4 +1,3 @@
-import javax.xml.crypto.Data;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -8,28 +7,6 @@ import java.util.concurrent.locks.ReentrantLock;
  * A global object that the system reports data to during execution.
  * After the execution of the program finishes, this data is then processed and the results
  * of the coverage are presented.
- *
- * Whenever a thread executes a Read or Write method, this is reported. So for example,
- * if Thread 1 does a Write on the balance, the Collector recieves:
- *
- * (w, balance, Thread1) - meaning a 'write' on balance by Thread1.
- *
- * This data is collected over the Thread's life, resulting in it's execution timeline. This is
- * done for all seperate Threads that execute.
- *
- * 	    1           2           3           4
- * T1 - r(balance), w(balance), r(balance), w(balance), ...
- * T2 - w(balance), w(balance), r(balance), r(balance), ...
- *
- * With this information, we can count the number of Def-Use pairs that exist in our tests.
- * A Def-Use pair is a write that happens before a read, with no other write to the variable
- * inbetween. Above, (T1,2),(T2,3) is one such pair.
- *
- * We also keep the actual order of execution by all threads as one, so we can figure out
- * which pairs were executed out of all the possible pairs.
- *
- * With these two, we can calculate the total coverage for that execution run, and report
- * this to the user.
  *
  * To use this class, call the get() function statically, then use report() on that object, like so:
  * 		DefUseDataCollector.get().report();
@@ -44,9 +21,9 @@ public class DefUseDataCollector {
     public static DefUseDataCollector get() { return collector; }
 
     //Data Structure fields
-    private Set<Instruction> instructions;
+    private Set<FieldAccesss> fieldAccesses;
     private Map<Field, DataAccessLogEntry> fieldToLastWrite;
-    private Map<InstructionPair, Boolean> instructionPairToIsCovered;
+    private Map<DefUsePair, Boolean> instructionPairToIsCovered;
 
     //Lock for making a field access and report call a synchronized block
     private Lock lock = new ReentrantLock();
@@ -57,7 +34,7 @@ public class DefUseDataCollector {
     private boolean outputAllPossiblePairs = true;
 
     public DefUseDataCollector() {
-        this.instructions = new HashSet<>();
+        this.fieldAccesses = new HashSet<>();
         this.fieldToLastWrite = new HashMap<>();
         this.instructionPairToIsCovered = new HashMap<>();
     }
@@ -65,19 +42,19 @@ public class DefUseDataCollector {
     public void register(char readOrWrite, int lineNumber, String enclosingClassName, String fieldName, String className) {
         if (outputReports) System.out.println("Register: "+readOrWrite+", "+lineNumber+", "+enclosingClassName+", "+fieldName+", "+className);
         Field field = new Field(fieldName, className);
-        Instruction newInstruction = new Instruction(readOrWrite, lineNumber, enclosingClassName, field);
+        FieldAccesss newFieldAccesss = new FieldAccesss(readOrWrite, lineNumber, enclosingClassName, field);
         // Check for existing accesses to this field
-        for (Instruction instruction: instructions) {
-            if (instruction.getField().equals(newInstruction.getField())) {
+        for (FieldAccesss fieldAccesss : fieldAccesses) {
+            if (fieldAccesss.getField().equals(newFieldAccesss.getField())) {
                 // If they are different types, means we have a new pair
-                if (instruction.getType() != newInstruction.getType()) {
-                    InstructionPair pair = new InstructionPair(instruction, newInstruction);
+                if (fieldAccesss.getType() != newFieldAccesss.getType()) {
+                    DefUsePair pair = new DefUsePair(fieldAccesss, newFieldAccesss);
                     if (outputReports) System.out.println("New Pair: "+pair.toString());
                     instructionPairToIsCovered.put(pair, false);
                 }
             }
         }
-        instructions.add(newInstruction);
+        fieldAccesses.add(newFieldAccesss);
     }
 
     /**
@@ -92,17 +69,17 @@ public class DefUseDataCollector {
     public synchronized void report(char readOrWrite, int lineNumber, String enclosingClassName, String fieldName, String className, long threadID) {
         if (outputReports) System.out.println("Report: "+readOrWrite+", "+lineNumber+", "+enclosingClassName+", "+fieldName+", "+className);
         Field field = new Field(fieldName, className);
-        Instruction instruction = new Instruction(readOrWrite, lineNumber, enclosingClassName, field);
-        DataAccessLogEntry logEntry = new DataAccessLogEntry(instruction, threadID);
+        FieldAccesss fieldAccesss = new FieldAccesss(readOrWrite, lineNumber, enclosingClassName, field);
+        DataAccessLogEntry logEntry = new DataAccessLogEntry(fieldAccesss, threadID);
 
-        if (instruction.getType() == Instruction.Type.WRITE) {
+        if (fieldAccesss.getType() == FieldAccesss.Type.WRITE) {
             // On a write simply update the map of previous writes
             fieldToLastWrite.put(field, logEntry);
-        } else if (instruction.getType() == Instruction.Type.READ) {
+        } else if (fieldAccesss.getType() == FieldAccesss.Type.READ) {
             // On a read create a pair with the last write if it exists and if it happened on a different thread
             DataAccessLogEntry lastWrite = fieldToLastWrite.get(field);
             if (lastWrite != null && lastWrite.getThreadID() != logEntry.getThreadID()) {
-                InstructionPair pair = new InstructionPair(lastWrite.getInstruction(), instruction);
+                DefUsePair pair = new DefUsePair(lastWrite.getFieldAccesss(), fieldAccesss);
                 if (outputReports) System.out.println("Pair Covered: "+pair.toString());
                 instructionPairToIsCovered.put(pair, true);
             }
@@ -112,7 +89,7 @@ public class DefUseDataCollector {
     public void getResults() {
         int totalPairs = instructionPairToIsCovered.size();
         int coveredPairs = 0;
-        for (InstructionPair pair : instructionPairToIsCovered.keySet()) {
+        for (DefUsePair pair : instructionPairToIsCovered.keySet()) {
             boolean isCovered = instructionPairToIsCovered.get(pair);
             if (outputAllPossiblePairs) System.out.println(pair.toString() + "; covered: " + isCovered);
             if (isCovered) coveredPairs++;

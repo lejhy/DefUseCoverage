@@ -2,23 +2,23 @@
 public class DataAccessLogEntry {
 
     long threadID;
-    Instruction instruction;
+    FieldAccesss fieldAccesss;
 
-    public DataAccessLogEntry(Instruction instruction, long threadID) {
+    public DataAccessLogEntry(FieldAccesss fieldAccesss, long threadID) {
         this.threadID = threadID;
-        this.instruction = instruction;
+        this.fieldAccesss = fieldAccesss;
     }
 
     public long getThreadID() {
         return threadID;
     }
 
-    public Instruction getInstruction() {
-       return instruction;
+    public FieldAccesss getFieldAccesss() {
+       return fieldAccesss;
     }
 
     public String toString() {
-        return "<"+threadID+","+instruction+">";
+        return "<"+threadID+","+ fieldAccesss +">";
     }
 
     public boolean equals(Object anotherObject) {
@@ -29,7 +29,7 @@ public class DataAccessLogEntry {
         if (anotherLogEntry.getThreadID() != threadID) {
             return false;
         }
-        if (!anotherLogEntry.getInstruction().equals(instruction)) {
+        if (!anotherLogEntry.getFieldAccesss().equals(fieldAccesss)) {
             return false;
         }
         return true;
@@ -38,7 +38,7 @@ public class DataAccessLogEntry {
     @Override
     public int hashCode() {
         int result =  (int)(threadID ^ (threadID >>> 32));
-        result = 37 * result + instruction.hashCode();
+        result = 37 * result + fieldAccesss.hashCode();
         return result;
     }
 }

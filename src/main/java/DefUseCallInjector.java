@@ -79,7 +79,7 @@ public class DefUseCallInjector implements ClassFileTransformer{
             String fieldName = f.getFieldName();
             String className = f.getClassName();
 
-            // Register the instruction with the monitoring class
+            // Register the fieldAccesss with the monitoring class
             DefUseDataCollector.get().register(readOrWrite, lineNumber, enclosingClassName, fieldName, className);
 
             // Inject the reporting code into the method

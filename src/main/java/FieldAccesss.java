@@ -1,4 +1,4 @@
-public class Instruction {
+public class FieldAccesss {
     public enum Type {
         READ, WRITE
     }
@@ -8,14 +8,14 @@ public class Instruction {
     private String enclosingClassName;
     private Field field;
 
-    public Instruction (Type type, int lineNumber, String enclosingClassName, Field field) {
+    public FieldAccesss(Type type, int lineNumber, String enclosingClassName, Field field) {
         this.type = type;
         this.lineNumber = lineNumber;
         this.enclosingClassName = enclosingClassName;
         this.field = field;
     }
 
-    public Instruction (char accessType, int lineNumber, String enclosingClassName, Field field) {
+    public FieldAccesss(char accessType, int lineNumber, String enclosingClassName, Field field) {
         Type type;
         if (accessType == 'w') type = Type.WRITE;
         else if (accessType == 'r') type = Type.READ;
@@ -49,20 +49,20 @@ public class Instruction {
 
     @Override
     public boolean equals(Object anotherObject) {
-        if (!(anotherObject instanceof Instruction)) {
+        if (!(anotherObject instanceof FieldAccesss)) {
             return false;
         }
-        Instruction anotherInstruction = (Instruction)anotherObject;
-        if (!anotherInstruction.getType().equals(type)) {
+        FieldAccesss anotherFieldAccesss = (FieldAccesss)anotherObject;
+        if (!anotherFieldAccesss.getType().equals(type)) {
             return false;
         }
-        if (anotherInstruction.getLineNumber() != lineNumber) {
+        if (anotherFieldAccesss.getLineNumber() != lineNumber) {
             return false;
         }
-        if (!anotherInstruction.getEnclosingClassName().equals(enclosingClassName)) {
+        if (!anotherFieldAccesss.getEnclosingClassName().equals(enclosingClassName)) {
             return false;
         }
-        if (!anotherInstruction.getField().equals(field)) {
+        if (!anotherFieldAccesss.getField().equals(field)) {
             return false;
         }
         return true;
