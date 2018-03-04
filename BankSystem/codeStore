@@ -1,0 +1,69 @@
+//Loops until the user inputs valid option in the console - there are internal loops that do the same within each of the choices.
+        do{
+            boolean validChoice = false;
+            System.out.println("[Clerk] or [Customer]?");
+            temp = userInput.next();
+
+            if (temp.toLowerCase().equals("clerk")) {
+                do { //Internal loop ensures the whole process does not need to be run again in case an incorrect password was entered - In the GUI we can implement a cancel function.
+                    System.out.println("Clerk password: ");
+                    temp = userInput.next();
+                    if (bank.clerkLogin(temp)) { //clerkLogin just checked the String given against the CLERK_PASS for that bank object and returns true if they match, false if not.
+                        validChoice = true;
+                        new Thread(new UserRunnable(clerk1), "clerk1"); //Created a new 'thread' that is ready to be started with the UserRunnable as a target to run. This is essentially a new login session for the Clerk.
+                    } else {
+                        validChoice = false;
+                        System.out.println("Incorrect password.");
+                    }
+                }while(!validChoice);
+
+            } else if (temp.toLowerCase().equals("customer")) {
+                validCategory = true;
+
+                do {
+                    System.out.println("[Login] or [Create] account?");
+                    temp = userInput.next();
+
+                    if (temp.toLowerCase().equals("login")) {
+                        validChoice = true;
+                        System.out.print("Name: ");
+                        name = userInput.next();
+                        System.out.print("Postcode: ");
+                        postcode = userInput.next();
+
+                        if(bank.customerSearch(name, postcode) == null){ //If there is no existing Customer (i.e. they don't have an account)
+                            do {
+                                System.out.print("You don't seem to have an account. Create one? [yes/no]: ");
+                                temp = userInput.next();
+                                if (temp.toLowerCase().equals("yes")) {
+                                    new Thread(new UserRunnable(new Customer(name, postcode)), "customer1"); //Create new customer and 'logs in'
+                                } else if(temp.toLowerCase().equals("no")){ //No existing customer, do not create new.
+                                    //Do nothing
+                                    validChoice = true; //Allow loop to be exited.
+                                }else{
+                                  validChoice = false;
+                                    System.out.println("Invalid option.");
+                                }
+                            }while(!validChoice);
+                        }else{//if the customer exists
+                            new Thread(new UserRunnable(bank.customerSearch(name, postcode)), "customer1");
+                        }
+
+                    } else if (temp.toLowerCase().equals("create")) {
+                        validChoice = true;
+                        System.out.print("Name: ");
+                        name = userInput.next();
+                        System.out.print("Postcode: ");
+                        postcode = userInput.next();
+                        bank.joiningCustomer(name, postcode);
+                    } else {
+                        validChoice = false;
+                        System.out.println("Invalid option.");
+                    }
+                }while(!validChoice);
+
+            } else {
+                System.out.println("Invalid option.");
+                validCategory = false;
+            }
+        }while(!validCategory);

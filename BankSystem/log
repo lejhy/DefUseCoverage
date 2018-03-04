@@ -1,0 +1,17 @@
+Oct 16, 2017 9:46:34 AM main.java.UI <init>
+INFO: Creating new bank...
+Oct 16, 2017 9:46:34 AM main.java.UI <init>
+INFO: Joining Customer...
+	Name: Conner	Postcode: G21
+Oct 16, 2017 9:46:34 AM main.java.UI <init>
+INFO: Opening Account...
+	Name: Conner	Postcode: G21
+	Type: 1
+Oct 16, 2017 9:46:34 AM main.java.UI <init>
+INFO: Opening Account...
+	Name: Conner	Postcode: G21
+	Type: 2
+Oct 16, 2017 9:46:34 AM main.java.UI <init>
+INFO: Opening Account...
+	Name: Conner	Postcode: G21
+	Type: 3
