@@ -1,0 +1,31 @@
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+
+sourceCompatibility = 9
+targetCompatibility = 9
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.javassist:javassist:3.22.0-GA'
+}
+
+jar {
+    archiveName = "${rootProject.name}.jar"
+    manifest {
+        attributes(
+                'Premain-Class': 'Agent',
+                'Can-Redefine-Classes': 'true',
+                'Can-Retransform-Classes': 'true',
+                'Can-Set-Native-Method-Prefix': 'true',
+                'Implementation-Title': "DefUseConcurrencyCoverage",
+                'Implementation-Version': rootProject.version
+        )
+    }
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
